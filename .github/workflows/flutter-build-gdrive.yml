@@ -33,17 +33,17 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.22.0"
+          flutter-version: "3.27.1"
           channel: "stable"
           cache: true
       - name: Build Android Staging
         run: |
-          fvm flutter build apk --flavor stable --dart-define-from-file=.env/dev.json \
+          flutter build apk --flavor stable --dart-define-from-file=.env/dev.json \
             --target-platform android-arm64 --release
           mv build/app/outputs/flutter-apk/app-stable-release.apk app-staging.apk
       - name: Build Android Prod
         run: |
-          fvm flutter build apk --flavor stable --dart-define-from-file=.env/prod.json \
+          flutter build apk --flavor stable --dart-define-from-file=.env/prod.json \
             --target-platform android-arm64 --release
           mv build/app/outputs/flutter-apk/app-stable-release.apk app-prod.apk
       - name: Upload APK artifacts
