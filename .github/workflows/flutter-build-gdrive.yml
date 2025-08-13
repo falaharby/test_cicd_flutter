@@ -37,22 +37,7 @@ jobs:
           channel: "stable"
           cache: true
       - name: Build Android Staging
-        run: |
-          flutter build apk --flavor stable --dart-define-from-file=.env/dev.json \
-            --target-platform android-arm64 --release
-          mv build/app/outputs/flutter-apk/app-stable-release.apk app-staging.apk
-      - name: Build Android Prod
-        run: |
-          flutter build apk --flavor stable --dart-define-from-file=.env/prod.json \
-            --target-platform android-arm64 --release
-          mv build/app/outputs/flutter-apk/app-stable-release.apk app-prod.apk
-      - name: Upload APK artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-builds
-          path: |
-            app-staging.apk
-            app-prod.apk
+        run: fvm flutter build apk --flavor stable --dart-define-from-file=.env/dev.json --target-platform android-arm64 --release -v
 
   # build-ios:
   #   runs-on: self-hosted
