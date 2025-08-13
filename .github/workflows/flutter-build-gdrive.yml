@@ -16,10 +16,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
-      # Clones the project on the machine
-      - uses: actions/checkout@v4
-
       - name: Check Environment
         run: |
           flutter doctor -v
