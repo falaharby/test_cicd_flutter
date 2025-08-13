@@ -13,17 +13,12 @@ jobs:
 
     # The machine, we can also use windows-latest or ubuntu-latest
     # We are choosing macos-latest because we will be also building for iOS
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      - name: Check Environment
-        run: |
-          flutter doctor -v
-          java -version
-          echo $JAVA_HOME
-          echo $ANDROID_HOME
-          which flutter
-          which java
+
+      # Clones the project on the machine
+      - uses: actions/checkout@v4
 
       # Installs flutter and related dependency on this machine
       - name: Setup Flutter
@@ -32,6 +27,15 @@ jobs:
           channel: 'stable'
           flutter-version: '3.27.1'
           # ^ If you want to use a specific version of flutter
+
+      - name: Check Environment
+        run: |
+          flutter doctor -v
+          java -version
+          echo $JAVA_HOME
+          echo $ANDROID_HOME
+          which flutter
+          which java
       
       # Fetches proj dependencies from pub
       - name: Install dependencies
