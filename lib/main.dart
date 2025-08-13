@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Test Build Home Page ${const String.fromEnvironment('BASE_URL')}'),
+      home: const MyHomePage(title: 'Test Build Test Home Page ${const String.fromEnvironment('BASE_URL')}'),
     );
   }
 }
