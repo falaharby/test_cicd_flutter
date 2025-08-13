@@ -37,7 +37,7 @@ jobs:
           channel: "stable"
           cache: true
       - name: Build Android Staging
-        run: fvm flutter build apk --flavor stable --dart-define-from-file=.env/dev.json --target-platform android-arm64 --release -v
+        run: flutter build apk
 
   # build-ios:
   #   runs-on: self-hosted
