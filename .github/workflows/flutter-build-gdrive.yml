@@ -17,6 +17,9 @@ jobs:
 
     steps:
 
+      - name: Print echo
+        run: echo "This is a test build for Flutter"
+
       # Clones the project on the machine
       - uses: actions/checkout@v4
 
