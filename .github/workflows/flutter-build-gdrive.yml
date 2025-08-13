@@ -16,7 +16,6 @@ jobs:
     runs-on: self-hosted
 
     steps:
-
       - name: Print echo
         run: echo "This is a test build for Flutter"
 
