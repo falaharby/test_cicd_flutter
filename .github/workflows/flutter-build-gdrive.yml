@@ -29,15 +29,6 @@ jobs:
           channel: 'stable'
           flutter-version: '3.27.1'
           # ^ If you want to use a specific version of flutter
-
-      - name: Check Environment
-        run: |
-          flutter doctor -v
-          java -version
-          echo $JAVA_HOME
-          echo $ANDROID_HOME
-          which flutter
-          which java
       
       # Fetches proj dependencies from pub
       - name: Install dependencies
