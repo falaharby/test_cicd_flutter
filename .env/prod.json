@@ -1,0 +1,21 @@
+{
+  "env": "prod",
+  "BASE_URL": "app.jala.tech",
+  "API_URL": "app.jala.tech/api",
+  "OAUTH2_URL": "app.jala.tech/oauth",
+  "CLIENT_ID": "2",
+  "CLIENT_SECRET": "hCKFctldlXAx0L6RDd6JFEsuEKcU3uQbOUvELAQ3",
+
+  "MIXPANEL_TOKEN": "ee3737a6bb82261d4895f3ededc16665",
+  "POSTHOG_API_KEY": "phc_knUUjFhafk6dpzbQ356GmWPhkPY4GaY1rsNnQsoF5HK",
+  "WIDGET_URL": "https://widgets.jala.tech",
+
+  "JALA_CHAT_GPT_URL": "https://serverless.jala.tech/chat-gpt",
+  "CRISP_WEBSITE_ID": "bca9165d-d26a-4a8f-a8d5-5625fb1a3f2b",
+
+  "VERIFY_RECEIPT_IOS_URL": "https://buy.itunes.apple.com/verifyReceipt",
+  "VERIFY_RECEIPT_IOS_URL_SANDBOX": "https://sandbox.itunes.apple.com/verifyReceipt",
+  "IOS_SHARED_SECRET": "a14f957cb3914641bc69e71f4271777d",
+
+  "BASE_URL_STRAPI": "https://strapi.jala.tech"
+}
