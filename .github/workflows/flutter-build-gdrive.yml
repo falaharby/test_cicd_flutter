@@ -53,6 +53,9 @@ jobs:
   flutter_job:
     runs-on: self-hosted
 
+    env:
+      RCLONE_CONF: ${{ secrets.RCLONE_CONF }}
+
     steps:
 
       - name: Setup rclone
