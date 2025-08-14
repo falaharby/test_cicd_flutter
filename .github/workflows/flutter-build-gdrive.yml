@@ -54,9 +54,8 @@ jobs:
     runs-on: self-hosted
 
     steps:
-    
+
       - name: Setup rclone
         run: |
-          mkdir -p ~/.config/rclone
           echo "${{ secrets.RCLONE_CONF }}" > ~/.config/rclone/rclone.conf
           rclone ls gdrive:
