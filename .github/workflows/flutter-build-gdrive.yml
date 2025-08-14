@@ -57,8 +57,11 @@ jobs:
       RCLONE_CONF: ${{ secrets.RCLONE_CONF }}
 
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
       - name: Setup rclone
         run: |
-          echo "${{ secrets.RCLONE_CONF }}" > ~/.config/rclone/rclone.conf
+          mkdir -p /tmp/rclone
+          echo "$RCLONE_CONF" > /tmp/rclone/rclone.conf
           rclone ls gdrive:
