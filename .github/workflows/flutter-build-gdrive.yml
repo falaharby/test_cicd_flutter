@@ -1,3 +1,44 @@
+# name: Flutter Build and Upload to GDrive
+
+# on:
+#   push:
+#     branches:
+#       - 'build/*'
+#   pull_request:
+#     branches:
+#       - 'build/*'
+
+# jobs:
+#   flutter_job:
+
+#     # The machine, we can also use windows-latest or ubuntu-latest
+#     # We are choosing macos-latest because we will be also building for iOS
+#     runs-on: self-hosted
+
+#     steps:
+#       - name: Print echo
+#         run: echo "This is a test build for Flutter"
+
+#       # Clones the project on the machine
+#       - uses: actions/checkout@v4
+
+#       # Installs flutter and related dependency on this machine
+#       - name: Setup Flutter
+#         uses: subosito/flutter-action@v2
+#         with:
+#           channel: 'stable'
+#           flutter-version: '3.27.1'
+#           # ^ If you want to use a specific version of flutter
+      
+#       # Fetches proj dependencies from pub
+#       - name: Install dependencies
+#         run: flutter pub get
+#         # ^ If you want to use a specific version of flutter
+      
+#       # Create android apk
+#       - name: Build apk
+#         run: flutter build apk
+  
 name: Flutter Build and Upload to GDrive
 
 on:
@@ -9,33 +50,47 @@ on:
       - 'build/*'
 
 jobs:
-  flutter_job:
-
-    # The machine, we can also use windows-latest or ubuntu-latest
-    # We are choosing macos-latest because we will be also building for iOS
-    runs-on: self-hosted
-
+  vars:
+    runs-on: ubuntu-latest
+    outputs:
+      folder_name: ${{ steps.set-vars.outputs.folder_name }}
     steps:
-      - name: Print echo
-        run: echo "This is a test build for Flutter"
+      - name: Set variables
+        id: set-vars
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # PR title, replace spaces/special chars with dash
+            pr_name=$(echo "${{ github.event.pull_request.title }}" | sed 's/[^a-zA-Z0-9]/-/g')
+            echo "folder_name=builds/PR-${pr_name}" >> $GITHUB_OUTPUT
+          else
+            echo "folder_name=builds/${GITHUB_SHA}" >> $GITHUB_OUTPUT
+          fi
 
-      # Clones the project on the machine
+  build-android:
+    runs-on: self-hosted
+    needs: vars
+    steps:
       - uses: actions/checkout@v4
-
-      # Installs flutter and related dependency on this machine
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
-          flutter-version: '3.27.1'
-          # ^ If you want to use a specific version of flutter
-      
-      # Fetches proj dependencies from pub
-      - name: Install dependencies
-        run: flutter pub get
-        # ^ If you want to use a specific version of flutter
-      
-      # Create android apk
-      - name: Build apk
-        run: flutter build apk
-  
+          flutter-version: "3.27.1"
+          channel: "stable"
+          cache: true
+      - name: Build Android Staging
+        run: |
+          fvm flutter build apk --flavor stable --dart-define-from-file=.env/dev.json \
+            --target-platform android-arm64 --release
+          mv build/app/outputs/flutter-apk/app-stable-release.apk app-staging.apk
+      - name: Build Android Prod
+        run: |
+          fvm flutter build apk --flavor stable --dart-define-from-file=.env/prod.json \
+            --target-platform android-arm64 --release
+          mv build/app/outputs/flutter-apk/app-stable-release.apk app-prod.apk
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-builds
+          path: |
+            app-staging.apk
+            app-prod.apk
