@@ -57,11 +57,42 @@ jobs:
       RCLONE_CONF: ${{ secrets.RCLONE_CONF }}
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      # 1️⃣ Checkout code
+      - uses: actions/checkout@v4
 
+      # 2️⃣ Setup Flutter
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.27.1'
+
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 4️⃣ Set Java 17 (macOS)
+      - name: Set Java 17
+        run: |
+          export JAVA_HOME=$(/usr/libexec/java_home -v17)
+          export PATH=$JAVA_HOME/bin:$PATH
+
+      # 5️⃣ Build APK release
+      - name: Build APK
+        run: flutter build apk --release -v
+
+      # 6️⃣ Setup rclone config (pakai temp file)
       - name: Setup rclone
         run: |
           mkdir -p /tmp/rclone
           echo "$RCLONE_CONF" > /tmp/rclone/rclone.conf
-          rclone ls gdrive:
+          chmod 600 /tmp/rclone/rclone.conf
+          echo "✅ Rclone config loaded:"
+          rclone --config /tmp/rclone/rclone.conf listremotes
+
+      # 7️⃣ Upload APK ke Google Drive
+      - name: Upload APK to GDrive
+        run: |
+          APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
+          FOLDER="builds/test-run"
+          rclone --config /tmp/rclone/rclone.conf copy "$APK_PATH" gdrive:"$FOLDER" --progress
