@@ -7,105 +7,61 @@ on:
   pull_request:
     branches:
       - 'build/*'
+  workflow_dispatch:
+    inputs:
+      env_type:
+        description: "Choose environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
 
 jobs:
-  vars:
+  flutter_job:
     runs-on: ubuntu-latest
-    outputs:
-      folder_name: ${{ steps.set-vars.outputs.folder_name }}
-    steps:
-      - name: Set variables
-        id: set-vars
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            # PR title, replace spaces/special chars with dash
-            pr_name=$(echo "${{ github.event.pull_request.title }}" | sed 's/[^a-zA-Z0-9]/-/g')
-            echo "folder_name=builds/PR-${pr_name}" >> $GITHUB_OUTPUT
-          else
-            echo "folder_name=builds/${GITHUB_SHA}" >> $GITHUB_OUTPUT
-          fi
 
-  build-android:
-    runs-on: self-hosted
-    needs: vars
+    env:
+      RCLONE_CONF: ${{ secrets.RCLONE_CONF }}
+
     steps:
+      # 1️⃣ Checkout code
       - uses: actions/checkout@v4
+
+      # 2️⃣ Setup Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.22.0"
-          channel: "stable"
-          cache: true
-      - name: Build Android Staging
-        run: |
-          fvm flutter build apk --flavor stable --dart-define-from-file=.env/dev.json \
-            --target-platform android-arm64 --release
-          mv build/app/outputs/flutter-apk/app-stable-release.apk app-staging.apk
-      - name: Build Android Prod
-        run: |
-          fvm flutter build apk --flavor stable --dart-define-from-file=.env/prod.json \
-            --target-platform android-arm64 --release
-          mv build/app/outputs/flutter-apk/app-stable-release.apk app-prod.apk
-      - name: Upload APK artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-builds
-          path: |
-            app-staging.apk
-            app-prod.apk
+          channel: 'stable'
+          flutter-version: '3.27.1'
 
-  # build-ios:
-  #   runs-on: self-hosted
-  #   needs: vars
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Setup Flutter
-  #       uses: subosito/flutter-action@v2
-  #       with:
-  #         flutter-version: "3.22.0"
-  #         channel: "stable"
-  #         cache: true
-  #     - name: Build iOS Staging
-  #       run: |
-  #         fvm flutter build ipa --flavor stable --dart-define-from-file=.env/dev.json --release
-  #         mv build/ios/ipa/*.ipa app-staging.ipa
-  #     - name: Build iOS Prod
-  #       run: |
-  #         fvm flutter build ipa --flavor stable --dart-define-from-file=.env/prod.json --release
-  #         mv build/ios/ipa/*.ipa app-prod.ipa
-  #     - name: Upload IPA artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: ios-builds
-  #         path: |
-  #           app-staging.ipa
-  #           app-prod.ipa
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: flutter pub get
 
-  upload-and-notify:
-    runs-on: self-hosted
-    needs: [vars, build-android]
-    steps:
-      - name: Download Android Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: android-builds
-      - name: Download iOS Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: ios-builds
-      - name: Setup rclone config
+      # 4️⃣ Set Java 17 (macOS)
+      - name: Set Java 17
         run: |
-          mkdir -p ~/.config/rclone
-          echo "${{ secrets.RCLONE_CONF }}" > ~/.config/rclone/rclone.conf
-      - name: Upload to Google Drive
+          export JAVA_HOME=$(/usr/libexec/java_home -v17)
+          export PATH=$JAVA_HOME/bin:$PATH
+
+      # 5️⃣ Build APK release
+      - name: Build APK
+        run: flutter build apk --release -v
+
+      # 6️⃣ Setup rclone config (pakai temp file)
+      - name: Setup rclone
         run: |
-          rclone mkdir gdrive:"${{ needs.vars.outputs.folder_name }}"
-          rclone copy . gdrive:"${{ needs.vars.outputs.folder_name }}" \
-            --include "app-*.apk" \
-            --transfers=4 --checkers=8 --progress
-      # - name: Send link to Mattermost
-      #   run: |
-      #     LINK="https://drive.google.com/drive/folders/$(rclone lsf gdrive:"${{ needs.vars.outputs.folder_name }}" --dirs-only --format p | head -n 1)"
-      #     curl -X POST -H 'Content-Type: application/json' \
-      #       -d "{\"text\":\"Build uploaded: ${LINK}\"}" \
-      #       ${{ secrets.MATTERMOST_WEBHOOK }}
+          mkdir -p /tmp/rclone
+          echo "$RCLONE_CONF" > /tmp/rclone/rclone.conf
+          chmod 600 /tmp/rclone/rclone.conf
+          echo "✅ Rclone config loaded:"
+          rclone --config /tmp/rclone/rclone.conf listremotes
+
+      # 7️⃣ Upload APK ke Google Drive
+      - name: Upload APK to GDrive
+        run: |
+          APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
+          FOLDER="builds/test-run"
+          rclone --config /tmp/rclone/rclone.conf copy "$APK_PATH" gdrive:"$FOLDER" --progress
